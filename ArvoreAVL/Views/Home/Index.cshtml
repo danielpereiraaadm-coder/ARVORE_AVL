@@ -1,0 +1,254 @@
+﻿@model ArvoreAVL.Models.ArvoreViewModel
+
+@functions {
+    void RenderizarNo(ArvoreAVL.Models.NoAVL? no)
+    {
+        if (no == null)
+            return;
+
+        int alturaEsquerda = no.Esquerda?.Altura ?? 0;
+        int alturaDireita = no.Direita?.Altura ?? 0;
+        int fator = alturaEsquerda - alturaDireita;
+
+        WriteLiteral("<div class=\"no-container\">");
+
+        WriteLiteral("<div class=\"no\">");
+
+        WriteLiteral("<strong>");
+        Write(no.Valor);
+        WriteLiteral("</strong>");
+
+        WriteLiteral("<small>Altura: ");
+        Write(no.Altura);
+        WriteLiteral("</small>");
+
+        WriteLiteral("<small>FB: ");
+        Write(fator);
+        WriteLiteral("</small>");
+
+        WriteLiteral("</div>");
+
+        if (no.Esquerda != null || no.Direita != null)
+        {
+            WriteLiteral("<div class=\"filhos\">");
+
+            WriteLiteral("<div class=\"filho\">");
+            RenderizarNo(no.Esquerda);
+            WriteLiteral("</div>");
+
+            WriteLiteral("<div class=\"filho\">");
+            RenderizarNo(no.Direita);
+            WriteLiteral("</div>");
+
+            WriteLiteral("</div>");
+        }
+
+        WriteLiteral("</div>");
+    }
+}
+
+<div class="painel">
+
+    @* ================================== *@
+    @*          Coluna esquerda           *@
+    @* ================================== *@
+
+    <div class="coluna-lateral">
+
+        @* ================================== *@
+        @*             Operações              *@
+        @* ================================== *@
+
+        <section class="controles">
+            <h2>Operações</h2>
+
+            <form asp-action="Inserir" method="post">
+                <label>Inserir valor</label>
+                <div class="linha">
+                    <input type="number" name="valor" required />
+                    <button type="submit">Inserir</button>
+                </div>
+            </form>
+
+            <form asp-action="Remover" method="post">
+                <label>Remover valor</label>
+                <div class="linha">
+                    <input type="number" name="valor" required />
+                    <button type="submit" class="remover">Remover</button>
+                </div>
+            </form>
+
+            <form asp-action="Buscar" method="post">
+                <label>Buscar valor</label>
+                <div class="linha">
+                    <input type="number" name="valor" required />
+                    <button type="submit" class="buscar">Buscar</button>
+                </div>
+            </form>
+
+            <form asp-action="Limpar" method="post">
+                <button type="submit" class="limpar">
+                    Limpar árvore
+                </button>
+            </form>
+
+            @if (!string.IsNullOrEmpty(Model.Mensagem))
+            {
+                <div class="mensagem">
+                    @Model.Mensagem
+                </div>
+            }
+        </section>
+
+        @* ================================== *@
+        @*       Informações da árvore        *@
+        @* ================================== *@
+
+        <section class="estatisticas">
+            <h2>Informações da árvore</h2>
+
+            <div class="cards">
+                <div class="card">
+                    <span>Quantidade de nós</span>
+                    <strong>@Model.Quantidade</strong>
+                </div>
+
+                <div class="card">
+                    <span>Altura da árvore</span>
+                    <strong>@Model.Altura</strong>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    @* ================================== *@
+    @*          Coluna direita            *@
+    @* ================================== *@
+
+    <div class="coluna-principal">
+
+        @* ================================== *@
+        @*       Visualização da árvore       *@
+        @* ================================== *@
+
+        <section class="visualizacao">
+            <h2>Visualização da árvore</h2>
+
+            <div class="barra-animacao">
+                <div class="legenda-animacao" aria-live="polite">
+                    <strong id="anim-titulo">Árvore atual</strong>
+                    <span id="anim-descricao"></span>
+                    <span class="anim-passo" id="anim-passo"></span>
+                </div>
+
+                <div class="controles-animacao" id="anim-controles">
+                    <button type="button" class="btn-anim" id="anim-anterior">‹ Anterior</button>
+                    <button type="button" class="btn-anim" id="anim-proximo">Próximo ›</button>
+                    <button type="button" class="btn-anim btn-anim-sec" id="anim-repetir">Repetir</button>
+                    <select id="anim-velocidade" aria-label="Velocidade da animação">
+                        <option value="2">Lenta</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="0.5">Rápida</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="palco" id="palco-arvore">
+                <div class="lona" id="lona-arvore">
+                    <svg id="arestas-arvore" aria-hidden="true"></svg>
+                </div>
+                <div class="palco-vazio" id="palco-vazio">A árvore está vazia.</div>
+            </div>
+
+            <div class="legenda-cores">
+                <span><i class="cor cor-novo"></i>Nó novo</span>
+                <span><i class="cor cor-desbalanceado"></i>Nó desbalanceado</span>
+                <span><i class="cor cor-movido"></i>Mudou de posição (rotação)</span>
+            </div>
+
+            <noscript>
+                @if (Model.Raiz != null)
+                {
+                    <div class="arvore">
+                        @{
+                            RenderizarNo(Model.Raiz);
+                        }
+                    </div>
+                }
+            </noscript>
+        </section>
+
+        @* ================================== *@
+        @*              Percurso              *@
+        @* ================================== *@
+
+        <section class="percursos">
+            <h2>Percursos</h2>
+
+            <p>
+                <strong>Pré-ordem:</strong>
+                @(string.IsNullOrEmpty(Model.PreOrdem) ? "—" : Model.PreOrdem)
+            </p>
+
+            <p>
+                <strong>Em ordem:</strong>
+                @(string.IsNullOrEmpty(Model.EmOrdem) ? "—" : Model.EmOrdem)
+            </p>
+
+            <p>
+                <strong>Pós-ordem:</strong>
+                @(string.IsNullOrEmpty(Model.PosOrdem) ? "—" : Model.PosOrdem)
+            </p>
+        </section>
+
+        @* ================================== *@
+        @*       Histórico de rotações        *@
+        @* ================================== *@
+
+        <section class="historico">
+            <h2>Histórico de rotações</h2>
+
+            @if (!Model.Historico.Any())
+            {
+                <p class="vazio">Nenhuma rotação realizada até o momento.</p>
+            }
+            else
+            {
+                <div class="tabela-rolagem">
+                    <table class="tabela-historico">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Hora</th>
+                                <th>Operação</th>
+                                <th>Rotação realizada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.Historico)
+                            {
+                                <tr>
+                                    <td>@r.Numero</td>
+                                    <td>@r.DataHora.ToString("HH:mm:ss")</td>
+                                    <td>
+                                        <span class="selo @(r.Operacao == "Inserir" ? "selo-inserir" : "selo-remover")">
+                                            @r.Operacao @r.Valor
+                                        </span>
+                                    </td>
+                                    <td>@r.Descricao</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+    </div>
+
+</div>
+
+@* Dados da animação (JSON) e script *@
+<script type="application/json" id="dados-arvore">@Html.Raw(Model.AnimacaoJson)</script>
+<script src="~/js/arvore-animada.js" asp-append-version="true"></script>
